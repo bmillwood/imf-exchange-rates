@@ -94,6 +94,34 @@ def weekdays(start, stop):
             yield current
 
 
+def convert_cmd():
+    try:
+        dbname, date, from_, to, amount = sys.argv[2:]
+        amount = float(amount)
+    except ValueError:
+        sys.stderr.write("Usage:\n\
+            {0} convert DBNAME DATE FROM TO AMOUNT\n".format(sys.argv[0]))
+        sys.exit(1)
+
+    with sqlite3.connect(dbname) as db:
+        cur = db.cursor()
+        cur.execute('SELECT value FROM exchange_rates WHERE \
+            date = ? AND currency = ?', (date, from_))
+        from_result = cur.fetchall()
+        cur.execute('SELECT value FROM exchange_rates WHERE \
+            date = ? AND currency = ?', (date, to))
+        to_result = cur.fetchall()
+
+    if not from_result:
+        sys.stderr.write("{0} is not a known currency\n".format(from_))
+    if not to_result:
+        sys.stderr.write("{0} is not a known currency\n".format(to))
+    if not from_result or not to_result:
+        sys.exit(1)
+
+    print(amount * to_result[0][0] / from_result[0][0])
+
+
 def missing_dates_cmd():
     dbname = sys.argv[2]
     start = None
@@ -124,6 +152,7 @@ def main():
     subcommands = {
         'create': create_cmd,
         'update': update_cmd,
+        'convert': convert_cmd,
         'missing-dates': missing_dates_cmd,
     }
 
@@ -131,12 +160,11 @@ def main():
         sys.stderr.write("Usage:\n\
             {0} create DBNAME [TSV]...\n\
             {0} update DBNAME [TSV]...\n\
+            {0} convert DBNAME DATE FROM TO AMOUNT\n\
             {0} missing-dates DBNAME [START [STOP]]\n".format(sys.argv[0]))
         sys.exit(1)
 
     subcommands[sys.argv[1]]()
-
-    sys.exit(0)
 
 if __name__ == '__main__':
     main()
