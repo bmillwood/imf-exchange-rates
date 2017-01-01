@@ -131,7 +131,7 @@ def main():
         sys.stderr.write("Usage:\n\
             {0} create DBNAME [TSV]...\n\
             {0} update DBNAME [TSV]...\n\
-            {0} missing-dates DBNAME [START] [STOP]\n".format(sys.argv[0]))
+            {0} missing-dates DBNAME [START [STOP]]\n".format(sys.argv[0]))
         sys.exit(1)
 
     subcommands[sys.argv[1]]()
