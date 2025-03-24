@@ -19,10 +19,12 @@ months = {
     'December':  '12',
 }
 
-# I should probably just redownload the data I have that uses old names
+# this really damages my generality but let's be honest no-one is using this but me
 currency_overrides = {
-    "U.K. Pound Sterling": "U.K. pound",
-    "U.S. Dollar": "U.S. dollar",
+    "U.K. Pound Sterling": "GBP",
+    "U.K. pound": "GBP",
+    "U.S. Dollar": "USD",
+    "U.S. dollar": "USD",
 }
 
 class CurrencyTSV:
@@ -173,6 +175,29 @@ def list_currencies_cmd() -> None:
             print(repr(r))
 
 
+def to_journal_cmd() -> None:
+    dbname, from_, to = sys.argv[2:]
+    results: dict[str, dict[str, float]] = {}
+    with sqlite3.connect(dbname) as db:
+        for (date, currency, value) in db.execute(
+            "SELECT date, currency, value FROM exchange_rates WHERE currency IN (?, ?)",
+            (from_, to),
+        ):
+            results.setdefault(date, {})[currency] = value
+
+    try:
+        for date in sorted(results.keys()):
+            value_by_currency = results[date]
+            missing_currencies = [c for c in [from_, to] if c not in value_by_currency]
+            if missing_currencies:
+                print(f"# No value on {date} for {missing_currencies}")
+                continue
+            rate = value_by_currency[to] / value_by_currency[from_]
+            print(f"P {date} {from_} {rate} {to}")
+    except BrokenPipeError:
+        pass
+
+
 def main() -> None:
     subcommands = {
         'create': create_cmd,
@@ -180,6 +205,7 @@ def main() -> None:
         'convert': convert_cmd,
         'missing-dates': missing_dates_cmd,
         'list-currencies': list_currencies_cmd,
+        'to-journal': to_journal_cmd,
     }
 
     if len(sys.argv) < 3 or sys.argv[1] not in subcommands:
@@ -191,6 +217,7 @@ def main() -> None:
             "{cmd} convert DBNAME DATE FROM TO AMOUNT",
             "{cmd} missing-dates DBNAME [START [STOP]]",
             "{cmd} list-currencies DBNAME",
+            "{cmd} to-journal DBNAME FROM TO",
         ]))
         sys.stderr.write("\n")
         sys.exit(1)
