@@ -157,11 +157,15 @@ def main():
     }
 
     if len(sys.argv) < 3 or sys.argv[1] not in subcommands:
-        sys.stderr.write("Usage:\n\
-            {0} create DBNAME [TSV]...\n\
-            {0} update DBNAME [TSV]...\n\
-            {0} convert DBNAME DATE FROM TO AMOUNT\n\
-            {0} missing-dates DBNAME [START [STOP]]\n".format(sys.argv[0]))
+        cmd = sys.argv[0]
+        sys.stderr.write("\n    ".join([
+            "Usage:",
+            "{cmd} create DBNAME [TSV]...",
+            "{cmd} update DBNAME [TSV]...",
+            "{cmd} convert DBNAME DATE FROM TO AMOUNT",
+            "{cmd} missing-dates DBNAME [START [STOP]]",
+        ]))
+        sys.stderr.write("\n")
         sys.exit(1)
 
     subcommands[sys.argv[1]]()
