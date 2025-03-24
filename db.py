@@ -101,32 +101,42 @@ def weekdays(start: datetime.date, stop: datetime.date):
             yield current
 
 
-def convert_cmd():
+def get_rate_or_exit(db: sqlite3.Connection, date: str, from_: str, to: str) -> float:
+    cur = db.cursor()
+    results: dict[str, float] = {}
+
+    for currency in [from_, to]:
+        cur.execute(
+            "SELECT value FROM exchange_rates WHERE date = ? AND currency = ?",
+            (date, currency),
+        )
+        rows = cur.fetchall()
+        if not rows:
+            sys.stderr.write(f"{currency} does not have a value on {date}\n")
+        if len(rows) > 1:
+            sys.stderr.write(f"{currency} has ambiguous value on {date}\n")
+        (results[currency],) = rows[0]
+
+    # don't exit until we've seen all errors
+    for currency in [from_, to]:
+        if currency not in results:
+            sys.exit(1)
+
+    return results[to] / results[from_]
+
+def convert_cmd() -> None:
     try:
-        dbname, date, from_, to, amount = sys.argv[2:]
-        amount = float(amount)
+        dbname, date, from_, to, amount_str = sys.argv[2:]
+        amount = float(amount_str)
     except ValueError:
         sys.stderr.write("Usage:\n\
             {0} convert DBNAME DATE FROM TO AMOUNT\n".format(sys.argv[0]))
         sys.exit(1)
 
     with sqlite3.connect(dbname) as db:
-        cur = db.cursor()
-        cur.execute('SELECT value FROM exchange_rates WHERE \
-            date = ? AND currency = ?', (date, from_))
-        from_result = cur.fetchall()
-        cur.execute('SELECT value FROM exchange_rates WHERE \
-            date = ? AND currency = ?', (date, to))
-        to_result = cur.fetchall()
+        rate = get_rate_or_exit(db=db, date=date, from_=from_, to=to)
 
-    if not from_result:
-        sys.stderr.write("{0} is not a known currency\n".format(from_))
-    if not to_result:
-        sys.stderr.write("{0} is not a known currency\n".format(to))
-    if not from_result or not to_result:
-        sys.exit(1)
-
-    print(amount * to_result[0][0] / from_result[0][0])
+    print(amount * rate)
 
 
 def missing_dates_cmd():
