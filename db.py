@@ -87,7 +87,7 @@ def date_of_string(s):
     return datetime.datetime.strptime(s, '%Y-%m-%d')
 
 
-def weekdays(start, stop):
+def weekdays(start: datetime.date, stop: datetime.date):
     for ordinal in range(start.toordinal(), stop.toordinal()):
         current = datetime.date.fromordinal(ordinal)
         if current.weekday() < 5:
@@ -140,9 +140,9 @@ def missing_dates_cmd():
         sys.stderr.write("No dates!\n")
         sys.exit(1)
     if start is None:
-        start = dates[0]
+        start = date_of_string(min(dates))
     if stop is None:
-        stop = dates[-1]
+        stop = date_of_string(max(dates))
     for weekday in weekdays(start, stop):
         if weekday.isoformat() not in dates:
             print(weekday)
