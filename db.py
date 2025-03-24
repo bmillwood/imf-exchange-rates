@@ -148,12 +148,21 @@ def missing_dates_cmd():
             print(weekday)
 
 
-def main():
+def list_currencies_cmd() -> None:
+    dbname = sys.argv[2]
+    with sqlite3.connect(dbname) as db:
+        query = "SELECT DISTINCT currency FROM exchange_rates"
+        for (r,) in db.execute(query):
+            print(repr(r))
+
+
+def main() -> None:
     subcommands = {
         'create': create_cmd,
         'update': update_cmd,
         'convert': convert_cmd,
         'missing-dates': missing_dates_cmd,
+        'list-currencies': list_currencies_cmd,
     }
 
     if len(sys.argv) < 3 or sys.argv[1] not in subcommands:
@@ -164,6 +173,7 @@ def main():
             "{cmd} update DBNAME [TSV]...",
             "{cmd} convert DBNAME DATE FROM TO AMOUNT",
             "{cmd} missing-dates DBNAME [START [STOP]]",
+            "{cmd} list-currencies DBNAME",
         ]))
         sys.stderr.write("\n")
         sys.exit(1)
