@@ -1,10 +1,9 @@
 # Tools for downloading and parsing IMF exchange rates data
 
-`./download.sh 201{1..6}-{01..12}` will fetch you five years of tsv 
-files into the current directory, in files named things like 
-`2011-01.tsv`.
+`./download.sh 201{1..6}-{01..12}` will fetch you five years of tsv files into
+the current directory, in files named things like `2011-01.tsv`.
 
-`./db.py rates.db *.tsv` will then create a sqlite3 database `rates.db` 
+`./db.py create rates.db *.tsv` will then create a sqlite3 database `rates.db`
 with all the data in it.
 
 ## Terms of use of IMF data
