@@ -19,6 +19,12 @@ months = {
     'December':  '12',
 }
 
+# I should probably just redownload the data I have that uses old names
+currency_overrides = {
+    "U.K. Pound Sterling": "U.K. pound",
+    "U.S. Dollar": "U.S. dollar",
+}
+
 class CurrencyTSV:
     def __init__(self, filename):
         self.file = open(filename)
@@ -53,7 +59,8 @@ class CurrencyTSV:
                     if value == 'NA':
                         continue
                     value = value.replace(',', '')
-                    self.q.append((date, bits[0], float(value)))
+                    currency = currency_overrides.get(bits[0], bits[0])
+                    self.q.append((date, currency, float(value)))
                 break
             else:
                 raise StopIteration
